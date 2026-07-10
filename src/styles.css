@@ -1,0 +1,68 @@
+body {
+  font-family: sans-serif;
+  overflow: clip;
+  margin: 0;
+}
+
+#swap-image-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+#idle-image-btn {
+  position: absolute;
+  bottom: 24px;
+  left: 320px;
+  width: 121px;
+  transform: translateX(-100%);
+  z-index: 10;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+#celebrate-image-btn {
+
+  position: absolute;
+  bottom: 24px;
+  left: 441px;
+  width: 121px;
+  transform: translateX(-100%);
+  z-index: 10;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+#swap-image-btn:hover {
+  background: #f0f0f0;
+}
+
+#swap-image-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
