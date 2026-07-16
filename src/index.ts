@@ -48,12 +48,12 @@ const triggerCelebrateBtn = document.getElementById(
 ) as HTMLButtonElement;
 // Parcel must resolve asset URLs at build time — plain paths like "src/images/..." 404 in dev
 const imageUrls: string[] = [
-  new URL("./images/hat1.png", import.meta.url).href,
+  new URL("./images/hat11.png", import.meta.url).href,
   new URL("./images/hat2.png", import.meta.url).href,
   new URL("./images/hat3.png", import.meta.url).href,
 ];
 
-const riveSrc = new URL("../duck_mascot3.riv", import.meta.url).href;
+const riveSrc = new URL("../duck_mascot_update.riv", import.meta.url).href;
 
 // Function to load a random image
 const loadRandomImage = async (imageProperty: ImageProperty): Promise<void> => {
