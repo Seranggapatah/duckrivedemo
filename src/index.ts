@@ -37,8 +37,23 @@ const layout = new Layout({
 
 // HTML Canvas element to render to
 const riveCanvas = document.getElementById("rive-canvas") as HTMLCanvasElement;
+const swapHeadBtn = document.getElementById(
+  "swap-head-btn",
+) as HTMLButtonElement;
+const swapBodyBackBtn = document.getElementById(
+  "swap-body-back-btn",
+) as HTMLButtonElement;
+const swapBodyFrontBtn = document.getElementById(
+  "swap-body-front-btn",
+) as HTMLButtonElement;
 const swapImageBtn = document.getElementById(
   "swap-image-btn",
+) as HTMLButtonElement;
+const swapShirtBtn = document.getElementById(
+  "swap-shirt-btn",
+) as HTMLButtonElement;
+const swapBootBtn = document.getElementById(
+  "swap-boot-btn",
 ) as HTMLButtonElement;
 const triggerIdleBtn = document.getElementById(
   "idle-image-btn",
@@ -48,17 +63,53 @@ const triggerCelebrateBtn = document.getElementById(
 ) as HTMLButtonElement;
 // Parcel must resolve asset URLs at build time — plain paths like "src/images/..." 404 in dev
 const imageUrls: string[] = [
-  new URL("./images/hat11.png", import.meta.url).href,
+  new URL("./images/hat1.png", import.meta.url).href,
   new URL("./images/hat2.png", import.meta.url).href,
   new URL("./images/hat3.png", import.meta.url).href,
 ];
 
-const riveSrc = new URL("../duck_mascot_update.riv", import.meta.url).href;
+// Placeholder shirt images — replace PNGs in src/images/ when ready
+const shirtImageUrls: string[] = [
+  new URL("./images/arm1.png", import.meta.url).href,
+  new URL("./images/arm2.png", import.meta.url).href,
+  new URL("./images/arm3.png", import.meta.url).href,
+];
+
+// Placeholder body front images — replace PNGs in src/images/ when ready
+const bodyFrontImageUrls: string[] = [
+  new URL("./images/body1.png", import.meta.url).href,
+  new URL("./images/body2.png", import.meta.url).href,
+  new URL("./images/body3.png", import.meta.url).href,
+  new URL("./images/body4.png", import.meta.url).href,
+];
+
+// Placeholder boot images — replace PNGs in src/images/ when ready
+const bootImageUrls: string[] = [
+  new URL("./images/Boot1.png", import.meta.url).href,
+  new URL("./images/Boot2.png", import.meta.url).href,
+  new URL("./images/Boot3.png", import.meta.url).href,
+  new URL("./images/Boot4.png", import.meta.url).href,
+];
+
+// Placeholder body back images — replace PNGs in src/images/ when ready
+const bodyBackImageUrls: string[] = [
+  new URL("./images/bodyBack1.png", import.meta.url).href,
+];
+
+// Placeholder head images — replace PNGs in src/images/ when ready
+const headImageUrls: string[] = [
+  new URL("./images/Head1.png", import.meta.url).href,
+];
+
+const riveSrc = new URL("../duck_mascot_final.riv", import.meta.url).href;
 
 // Function to load a random image
-const loadRandomImage = async (imageProperty: ImageProperty): Promise<void> => {
-  const randomIndex = Math.floor(Math.random() * imageUrls.length);
-  const imageUrl = imageUrls[randomIndex];
+const loadRandomImage = async (
+  imageProperty: ImageProperty,
+  urls: string[] = imageUrls,
+): Promise<void> => {
+  const randomIndex = Math.floor(Math.random() * urls.length);
+  const imageUrl = urls[randomIndex];
 
   try {
     const res = await fetch(imageUrl);
@@ -87,19 +138,54 @@ const r = new Rive({
     const vmi = r.viewModelInstance as ViewModelInstance;
     if (!vmi) return;
 
-    const imageProperty = vmi.image("imageHat");
+    const imageHat = vmi.image("imageHat");
+    const imageHead = vmi.image("imageHead");
+    const imageShirt = vmi.image("imageShirt");
+    const imageBodyFront = vmi.image("imageBodyFront");
+    const imageBodyback = vmi.image("imageBodyback");
+    const imageBoot = vmi.image("imageBoot");
     const triggerWeaving = vmi.trigger("triggerWeaving");
     const triggerCelebrate = vmi.trigger("triggerCelebration");
 
     const swapImage = (): void => {
-      loadRandomImage(imageProperty);
+      loadRandomImage(imageHat);
     };
 
+    const swapHead = (): void => {
+      loadRandomImage(imageHead, headImageUrls);
+    };
+
+    const swapShirt = (): void => {
+      loadRandomImage(imageShirt, shirtImageUrls);
+    };
+
+    const swapBodyFront = (): void => {
+      loadRandomImage(imageBodyFront, bodyFrontImageUrls);
+    };
+
+    const swapBodyBack = (): void => {
+      loadRandomImage(imageBodyback, bodyBackImageUrls);
+    };
+
+    const swapBoot = (): void => {
+      loadRandomImage(imageBoot, bootImageUrls);
+    };
+
+    swapHeadBtn.disabled = false;
+    swapBodyBackBtn.disabled = false;
+    swapBodyFrontBtn.disabled = false;
     swapImageBtn.disabled = false;
+    swapShirtBtn.disabled = false;
+    swapBootBtn.disabled = false;
     triggerIdleBtn.disabled = false;
     triggerCelebrateBtn.disabled = false;
 
+    swapHeadBtn.addEventListener("click", swapHead);
     swapImageBtn.addEventListener("click", swapImage);
+    swapShirtBtn.addEventListener("click", swapShirt);
+    swapBodyBackBtn.addEventListener("click", swapBodyBack);
+    swapBodyFrontBtn.addEventListener("click", swapBodyFront);
+    swapBootBtn.addEventListener("click", swapBoot);
 
     triggerIdleBtn.addEventListener("click", () => {
       triggerWeaving?.trigger();
