@@ -11,7 +11,6 @@
 import "./styles.css";
 import { Fit, Rive, Layout, decodeImage } from "@rive-app/webgl2";
 
-// Define types for better type safety
 interface RiveImage {
   unref(): void;
 }
@@ -30,12 +29,10 @@ interface ViewModelInstance {
   trigger(name: string): TriggerProperty;
 }
 
-// The layout of the graphic will adhere to
 const layout = new Layout({
   fit: Fit.Layout,
 });
 
-// HTML Canvas element to render to
 const riveCanvas = document.getElementById("rive-canvas") as HTMLCanvasElement;
 const swapHeadBtn = document.getElementById(
   "swap-head-btn",
@@ -61,21 +58,19 @@ const triggerIdleBtn = document.getElementById(
 const triggerCelebrateBtn = document.getElementById(
   "celebrate-image-btn",
 ) as HTMLButtonElement;
-// Parcel must resolve asset URLs at build time — plain paths like "src/images/..." 404 in dev
+
 const imageUrls: string[] = [
   new URL("./images/hat1.png", import.meta.url).href,
   new URL("./images/hat2.png", import.meta.url).href,
   new URL("./images/hat3.png", import.meta.url).href,
 ];
 
-// Placeholder shirt images — replace PNGs in src/images/ when ready
 const shirtImageUrls: string[] = [
   new URL("./images/arm1.png", import.meta.url).href,
   new URL("./images/arm2.png", import.meta.url).href,
   new URL("./images/arm3.png", import.meta.url).href,
 ];
 
-// Placeholder body front images — replace PNGs in src/images/ when ready
 const bodyFrontImageUrls: string[] = [
   new URL("./images/body1.png", import.meta.url).href,
   new URL("./images/body2.png", import.meta.url).href,
@@ -83,7 +78,6 @@ const bodyFrontImageUrls: string[] = [
   new URL("./images/body4.png", import.meta.url).href,
 ];
 
-// Placeholder boot images — replace PNGs in src/images/ when ready
 const bootImageUrls: string[] = [
   new URL("./images/Boot1.png", import.meta.url).href,
   new URL("./images/Boot2.png", import.meta.url).href,
@@ -91,37 +85,121 @@ const bootImageUrls: string[] = [
   new URL("./images/Boot4.png", import.meta.url).href,
 ];
 
-// Placeholder body back images — replace PNGs in src/images/ when ready
 const bodyBackImageUrls: string[] = [
   new URL("./images/bodyBack1.png", import.meta.url).href,
 ];
 
-// Placeholder head images — replace PNGs in src/images/ when ready
 const headImageUrls: string[] = [
   new URL("./images/Head1.png", import.meta.url).href,
 ];
 
 const riveSrc = new URL("../duck_mascot_final.riv", import.meta.url).href;
 
-// Function to load a random image
+const logDebug = (
+  label: string,
+  message: string,
+  data?: unknown,
+): void => {
+  const time = new Date().toLocaleTimeString();
+  if (data !== undefined) {
+    console.log(`[${time}] [${label}] ${message}`, data);
+    return;
+  }
+  console.log(`[${time}] [${label}] ${message}`);
+};
+
+const bindSwapButton = (
+  button: HTMLButtonElement,
+  label: string,
+  onSwap: () => void,
+): void => {
+  button.addEventListener("pointerdown", () => {
+    logDebug(label, "Tombol ditekan");
+  });
+
+  button.addEventListener("click", () => {
+    logDebug(label, "Tombol diklik, mulai swap image...");
+    onSwap();
+  });
+};
+
+const bindTriggerButton = (
+  button: HTMLButtonElement,
+  label: string,
+  onTrigger: () => void,
+): void => {
+  button.addEventListener("pointerdown", () => {
+    logDebug(label, "Tombol ditekan");
+  });
+
+  button.addEventListener("click", () => {
+    logDebug(label, "Tombol diklik, trigger animation...");
+    onTrigger();
+  });
+};
+
+const getImageProperty = (
+  vmi: ViewModelInstance,
+  name: string,
+): ImageProperty | null => {
+  try {
+    const property = vmi.image(name);
+    if (!property) {
+      console.error(`ViewModel image "${name}" not found`);
+      return null;
+    }
+    logDebug("VM Bind", `image "${name}" OK`);
+    return property;
+  } catch (error) {
+    console.error(`Failed to bind ViewModel image "${name}":`, error);
+    return null;
+  }
+};
+
 const loadRandomImage = async (
-  imageProperty: ImageProperty,
-  urls: string[] = imageUrls,
+  imageProperty: ImageProperty | null,
+  urls: string[],
+  label: string,
 ): Promise<void> => {
+  if (!imageProperty) {
+    console.error(`[${label}] Image property is not available`);
+    return;
+  }
+
+  if (urls.length === 0) {
+    console.error(`[${label}] No image URLs configured`);
+    return;
+  }
+
   const randomIndex = Math.floor(Math.random() * urls.length);
   const imageUrl = urls[randomIndex];
+
+  logDebug(label, "Fetching image...", {
+    index: randomIndex,
+    total: urls.length,
+    url: imageUrl,
+  });
 
   try {
     const res = await fetch(imageUrl);
     if (!res.ok) {
       throw new Error(`HTTP ${res.status} for ${imageUrl}`);
     }
-    const image = await decodeImage(new Uint8Array(await res.arrayBuffer()));
 
+    logDebug(label, "Fetch OK, decoding PNG...");
+    const image = await decodeImage(new Uint8Array(await res.arrayBuffer()));
+    logDebug(label, "Decode OK, assign ke ViewModel image...");
+
+    const previousImage = imageProperty.value;
     imageProperty.value = image;
-    console.log(`Loaded: ${imageUrl}`);
+    previousImage?.unref();
+
+    logDebug(label, "Image berhasil di-load dan di-assign", {
+      url: imageUrl,
+      hasPreviousImage: Boolean(previousImage),
+    });
   } catch (error) {
-    console.error(`Failed to load ${imageUrl}:`, error);
+    console.error(`[${label}] Failed to load ${imageUrl}:`, error);
   }
 };
 
@@ -134,69 +212,75 @@ const r = new Rive({
   autoplay: true,
   autoBind: true,
   onLoad: (): void => {
+    logDebug("Rive", "File loaded");
     r.resizeDrawingSurfaceToCanvas();
-    const vmi = r.viewModelInstance as ViewModelInstance;
-    if (!vmi) return;
+    const vmi = r.viewModelInstance as ViewModelInstance | null;
+    if (!vmi) {
+      console.error("ViewModel instance not available");
+      return;
+    }
 
-    const imageHat = vmi.image("imageHat");
-    const imageHead = vmi.image("imageHead");
-    const imageShirt = vmi.image("imageShirt");
-    const imageBodyFront = vmi.image("imageBodyFront");
-    const imageBodyback = vmi.image("imageBodyback");
-    const imageBoot = vmi.image("imageBoot");
+    logDebug("Rive", "ViewModel instance ready");
+
+    const imageHat = getImageProperty(vmi, "imageHat");
+    const imageHead = getImageProperty(vmi, "imageHead");
+    const imageShirt = getImageProperty(vmi, "imageShirt");
+    const imageBodyFront = getImageProperty(vmi, "imageBodyFront");
+    const imageBodyback = getImageProperty(vmi, "imageBodyback");
+    const imageBoot = getImageProperty(vmi, "imageBoot");
     const triggerWeaving = vmi.trigger("triggerWeaving");
     const triggerCelebrate = vmi.trigger("triggerCelebration");
 
-    const swapImage = (): void => {
-      loadRandomImage(imageHat);
-    };
+    logDebug("Shirt Debug", "Status binding imageShirt", {
+      bound: Boolean(imageShirt),
+      urls: shirtImageUrls,
+    });
 
-    const swapHead = (): void => {
-      loadRandomImage(imageHead, headImageUrls);
-    };
+    const swapButtons = [
+      swapHeadBtn,
+      swapBodyBackBtn,
+      swapBodyFrontBtn,
+      swapImageBtn,
+      swapShirtBtn,
+      swapBootBtn,
+      triggerIdleBtn,
+      triggerCelebrateBtn,
+    ];
 
-    const swapShirt = (): void => {
-      loadRandomImage(imageShirt, shirtImageUrls);
-    };
+    bindSwapButton(swapHeadBtn, "Head", () => {
+      loadRandomImage(imageHead, headImageUrls, "Head");
+    });
+    bindSwapButton(swapImageBtn, "Hat", () => {
+      loadRandomImage(imageHat, imageUrls, "Hat");
+    });
+    bindSwapButton(swapShirtBtn, "Shirt", () => {
+      loadRandomImage(imageShirt, shirtImageUrls, "Shirt");
+    });
+    bindSwapButton(swapBodyFrontBtn, "Body Front", () => {
+      loadRandomImage(imageBodyFront, bodyFrontImageUrls, "Body Front");
+    });
+    bindSwapButton(swapBodyBackBtn, "Body Back", () => {
+      loadRandomImage(imageBodyback, bodyBackImageUrls, "Body Back");
+    });
+    bindSwapButton(swapBootBtn, "Boot", () => {
+      loadRandomImage(imageBoot, bootImageUrls, "Boot");
+    });
 
-    const swapBodyFront = (): void => {
-      loadRandomImage(imageBodyFront, bodyFrontImageUrls);
-    };
-
-    const swapBodyBack = (): void => {
-      loadRandomImage(imageBodyback, bodyBackImageUrls);
-    };
-
-    const swapBoot = (): void => {
-      loadRandomImage(imageBoot, bootImageUrls);
-    };
-
-    swapHeadBtn.disabled = false;
-    swapBodyBackBtn.disabled = false;
-    swapBodyFrontBtn.disabled = false;
-    swapImageBtn.disabled = false;
-    swapShirtBtn.disabled = false;
-    swapBootBtn.disabled = false;
-    triggerIdleBtn.disabled = false;
-    triggerCelebrateBtn.disabled = false;
-
-    swapHeadBtn.addEventListener("click", swapHead);
-    swapImageBtn.addEventListener("click", swapImage);
-    swapShirtBtn.addEventListener("click", swapShirt);
-    swapBodyBackBtn.addEventListener("click", swapBodyBack);
-    swapBodyFrontBtn.addEventListener("click", swapBodyFront);
-    swapBootBtn.addEventListener("click", swapBoot);
-
-    triggerIdleBtn.addEventListener("click", () => {
+    bindTriggerButton(triggerIdleBtn, "Weaving", () => {
       triggerWeaving?.trigger();
     });
-    triggerCelebrateBtn.addEventListener("click", () => {
+    bindTriggerButton(triggerCelebrateBtn, "Celebrate", () => {
       triggerCelebrate.trigger();
     });
+
+    swapButtons.forEach((button) => {
+      button.disabled = false;
+    });
+
+    logDebug("Rive", "Semua tombol aktif. Buka DevTools Console (F12) untuk debug.");
   },
 });
 
-// Re-adjust the rendering surface if the window resizes
 window.addEventListener("resize", () => {
   r.resizeDrawingSurfaceToCanvas();
 });
