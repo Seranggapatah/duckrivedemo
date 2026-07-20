@@ -93,7 +93,7 @@ const headImageUrls: string[] = [
   new URL("./images/Head1.png", import.meta.url).href,
 ];
 
-const riveSrc = new URL("../duck_mascot_final.riv", import.meta.url).href;
+const riveSrc = new URL("../duck_mascot_FINAL.riv", import.meta.url).href;
 
 const logDebug = (
   label: string,
